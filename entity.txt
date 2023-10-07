@@ -28,4 +28,21 @@
 
 
 - campaign Images
+* id: int
+* campaign_id: int
+* file_name: varchar
+* is_primary: boolean (tinyint)
+* created_at : datetime
+* updated_at : datetime
+
+
+
 - transaction
+* id: int
+* campaign_id:int
+* user_id:int
+* amount: int
+* status: varchar
+* code: varchar
+* created_at : datetime
+* updated_at : datetime

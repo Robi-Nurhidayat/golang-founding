@@ -4,6 +4,7 @@ import (
 	"bwa/golang/auth"
 	"bwa/golang/handler"
 	"bwa/golang/user"
+	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,22 @@ func main() {
 	authService := auth.NewJwtService()
 	// fmt.Println(authService.GenerateToken(1001))
 
+	token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxOX0.Kh4mph0xcUpRXKd5mCfN2VRsEfWxduExIb3XyV7XpUQ")
+	if err != nil {
+		fmt.Println("Erroe")
+		fmt.Println("Erroe")
+		fmt.Println("Erroe")
+	}
+
+	if token.Valid {
+		fmt.Println("VALUD")
+		fmt.Println("VALUD")
+		fmt.Println("VALUD")
+	}else {
+		fmt.Println("INVALID")
+		fmt.Println("INVALID")
+		fmt.Println("INVALID")
+	}
 
 	userHandler := handler.NewUserHandler(userService,authService)
 

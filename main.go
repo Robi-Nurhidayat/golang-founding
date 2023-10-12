@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bwa/golang/auth"
 	"bwa/golang/handler"
 	"bwa/golang/user"
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"log"
 )
 
 func main() {
@@ -21,7 +23,12 @@ func main() {
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 	//userService.SaveAvatar(4, "images/asdasd.png")
-	userHandler := handler.NewUserHandler(userService)
+
+	authService := auth.NewJwtService()
+	// fmt.Println(authService.GenerateToken(1001))
+
+
+	userHandler := handler.NewUserHandler(userService,authService)
 
 	router := gin.Default()
 	api := router.Group("/api/v1")

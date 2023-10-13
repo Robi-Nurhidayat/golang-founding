@@ -47,7 +47,7 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	token,err := h.authService.GenerateToken(newUser.Id)
+	token, err := h.authService.GenerateToken(newUser.Id)
 	if err != nil {
 		response := helper.ApiResponse("Register account failed", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
@@ -83,7 +83,7 @@ func (h *userHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token,err := h.authService.GenerateToken(loggedUser.Id)
+	token, err := h.authService.GenerateToken(loggedUser.Id)
 	if err != nil {
 		response := helper.ApiResponse("Login  failed", http.StatusUnprocessableEntity, "error", nil)
 		c.JSON(http.StatusUnprocessableEntity, response)
@@ -144,7 +144,8 @@ func (h *userHandler) UploadAvatar(c *gin.Context) {
 		return
 	}
 	//	harus nya dari jwt, untuk sementara hardcode
-	userId := 1
+	currentUser := c.MustGet("currentUser").(user.User)
+	userId := currentUser.Id
 	path := fmt.Sprintf("images/%d-%s", userId, file.Filename)
 
 	err = c.SaveUploadedFile(file, path)

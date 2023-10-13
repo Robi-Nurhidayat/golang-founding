@@ -3,9 +3,12 @@ package main
 import (
 	"bwa/golang/auth"
 	"bwa/golang/handler"
+	"bwa/golang/helper"
 	"bwa/golang/user"
-	"fmt"
+	"github.com/golang-jwt/jwt/v5"
 	"log"
+	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -23,37 +26,67 @@ func main() {
 
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
-	//userService.SaveAvatar(4, "images/asdasd.png")
 
 	authService := auth.NewJwtService()
-	// fmt.Println(authService.GenerateToken(1001))
 
-	token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxOX0.Kh4mph0xcUpRXKd5mCfN2VRsEfWxduExIb3XyV7XpUQ")
-	if err != nil {
-		fmt.Println("Erroe")
-		fmt.Println("Erroe")
-		fmt.Println("Erroe")
-	}
-
-	if token.Valid {
-		fmt.Println("VALUD")
-		fmt.Println("VALUD")
-		fmt.Println("VALUD")
-	}else {
-		fmt.Println("INVALID")
-		fmt.Println("INVALID")
-		fmt.Println("INVALID")
-	}
-
-	userHandler := handler.NewUserHandler(userService,authService)
+	userHandler := handler.NewUserHandler(userService, authService)
 
 	router := gin.Default()
 	api := router.Group("/api/v1")
 	api.POST("/users", userHandler.RegisterUser)
 	api.POST("/sessions", userHandler.Login)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
-	api.POST("/avatars", userHandler.UploadAvatar)
+	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
 
 	router.Run()
+
+}
+func authMiddleware(serviceAuth auth.ServiceAuth, service user.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		authHeader := c.GetHeader("Authorization")
+
+		if !strings.Contains(authHeader, "Bearer") {
+
+			response := helper.ApiResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+
+		tokenString := ""
+		arrayToken := strings.Split(authHeader, " ")
+
+		if len(arrayToken) == 2 {
+			tokenString = arrayToken[1]
+		}
+
+		token, err := serviceAuth.ValidateToken(tokenString)
+
+		if err != nil {
+			response := helper.ApiResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+		claim, ok := token.Claims.(jwt.MapClaims)
+
+		if !ok || !token.Valid {
+			if err != nil {
+				response := helper.ApiResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+				c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+				return
+			}
+		}
+
+		userId := int(claim["user_id"].(float64))
+
+		newUser, err := service.GetUserById(userId)
+
+		if err != nil {
+			response := helper.ApiResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+		c.Set("currentUser", newUser)
+	}
 
 }

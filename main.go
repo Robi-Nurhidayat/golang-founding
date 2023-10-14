@@ -6,11 +6,11 @@ import (
 	"bwa/golang/handler"
 	"bwa/golang/helper"
 	"bwa/golang/user"
-	"fmt"
-	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -33,16 +33,9 @@ func main() {
 
 	//campaigns
 	campaignRepository := campaign.NewRepositoryCampaign(db)
-	campaigns, _ := campaignRepository.FindByUserId(24)
 
-	fmt.Println("Debug")
-	fmt.Println("Debug")
-	fmt.Println(len(campaigns))
+	capaignService := campaign.NewCampaignService(campaignRepository)
 
-	for _, v := range campaigns {
-		fmt.Println(v.Name)
-		fmt.Println(v.CampaignImages[0].FileName)
-	}
 	router := gin.Default()
 	api := router.Group("/api/v1")
 	api.POST("/users", userHandler.RegisterUser)

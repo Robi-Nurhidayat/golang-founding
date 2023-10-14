@@ -1,7 +1,7 @@
 package campaign
 
 type CampaignService interface {
-	FindCampaigns(userId int) ([]Campaign, error)
+	GetCampaigns(userId int) ([]Campaign, error)
 }
 
 type campaignService struct {
@@ -14,7 +14,7 @@ func NewCampaignService(repository RepositoryCampaign) CampaignService {
 	}
 }
 
-func (c *campaignService) FindCampaigns(userId int) ([]Campaign, error) {
+func (c *campaignService) GetCampaigns(userId int) ([]Campaign, error) {
 
 	if userId != 0 {
 		campaigns, err := c.repository.FindByUserId(userId)
@@ -22,7 +22,7 @@ func (c *campaignService) FindCampaigns(userId int) ([]Campaign, error) {
 			return campaigns, err
 		}
 
-		return campaigns,nil
+		return campaigns, nil
 	}
 
 	campaigns, err := c.repository.FindAll()

@@ -16,7 +16,7 @@ func NewCampaignHandler(service campaign.CampaignService) *campaignHandler {
 	return &campaignHandler{service: service}
 }
 
-func (h *campaignHandler) GetCampaign(c *gin.Context) {
+func (h *campaignHandler) GetCampaigns(c *gin.Context) {
 	userId, _ := strconv.Atoi(c.Query("user_id"))
 
 	campaigns, err := h.service.GetCampaigns(userId)
@@ -44,5 +44,9 @@ func (h *campaignHandler) GetCampaign(c *gin.Context) {
 
 	response := helper.ApiResponse("List Of campaigns", http.StatusOK, "success", newCampaigns)
 	c.JSON(http.StatusOK, response)
+
+}
+
+func (h *campaignHandler) GetCampaign(c *gin.Context) {
 
 }

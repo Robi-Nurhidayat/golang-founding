@@ -2,9 +2,11 @@ package main
 
 import (
 	"bwa/golang/auth"
+	"bwa/golang/campaign"
 	"bwa/golang/handler"
 	"bwa/golang/helper"
 	"bwa/golang/user"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"net/http"
@@ -26,11 +28,21 @@ func main() {
 
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
-
 	authService := auth.NewJwtService()
-
 	userHandler := handler.NewUserHandler(userService, authService)
 
+	//campaigns
+	campaignRepository := campaign.NewRepositoryCampaign(db)
+	campaigns, _ := campaignRepository.FindByUserId(24)
+
+	fmt.Println("Debug")
+	fmt.Println("Debug")
+	fmt.Println(len(campaigns))
+
+	for _, v := range campaigns {
+		fmt.Println(v.Name)
+		fmt.Println(v.CampaignImages[0].FileName)
+	}
 	router := gin.Default()
 	api := router.Group("/api/v1")
 	api.POST("/users", userHandler.RegisterUser)

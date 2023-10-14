@@ -26,7 +26,23 @@ func (h *campaignHandler) GetCampaign(c *gin.Context) {
 		return
 	}
 
-	response := helper.ApiResponse("List Of campaigns", http.StatusOK, "success", campaigns)
+	if len(campaigns) == 0 {
+		response := helper.ApiResponse("Error to get campaigns", http.StatusBadRequest, "error", []campaign.Campaign{})
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// dari ini
+	var newCampaigns []campaign.CompaignFormatter
+
+	for _, value := range campaigns {
+		campainFormatter := campaign.FormatterCampaign(value)
+		newCampaigns = append(newCampaigns, campainFormatter)
+	}
+
+	// sampe atas ini, nanti kita repactor
+
+	response := helper.ApiResponse("List Of campaigns", http.StatusOK, "success", newCampaigns)
 	c.JSON(http.StatusOK, response)
 
 }

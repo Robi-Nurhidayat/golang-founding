@@ -35,16 +35,28 @@ func FormatterCampaign(campaign Campaign) CompaignFormatter {
 }
 
 type CampaignDetailFormatter struct {
-	Id               int      `json:"id"`
-	Name             string   `json:"name"`
-	ShortDescription string   `json:"short_description"`
-	Description      string   `json:"description"`
-	ImageUrl         string   `json:"image_url"`
-	GoalAmount       int      `json:"goal_amount"`
-	CurrentAmount    int      `json:"current_amount"`
-	UserId           int      `json:"user_id"`
-	Slug             string   `json:"slug"`
-	Perks            []string `json:"perks"`
+	Id               int                       `json:"id"`
+	Name             string                    `json:"name"`
+	ShortDescription string                    `json:"short_description"`
+	Description      string                    `json:"description"`
+	ImageUrl         string                    `json:"image_url"`
+	GoalAmount       int                       `json:"goal_amount"`
+	CurrentAmount    int                       `json:"current_amount"`
+	UserId           int                       `json:"user_id"`
+	Slug             string                    `json:"slug"`
+	Perks            []string                  `json:"perks"`
+	User             CampaignUserFormatter     `json:"user"`
+	Images           []CampaignImagesFormatter `json:"images"`
+}
+
+type CampaignUserFormatter struct {
+	Name     string `json:"name"`
+	ImageUrl string `json:"image_url"`
+}
+
+type CampaignImagesFormatter struct {
+	ImageUrl  string `json:"image_url"`
+	IsPrimary bool   `json:"is_primary"`
 }
 
 func FormatCampaignDetail(campaign Campaign) CampaignDetailFormatter {
@@ -72,5 +84,33 @@ func FormatCampaignDetail(campaign Campaign) CampaignDetailFormatter {
 	}
 
 	campaignDetail.Perks = perks
+
+	// untuk mengisi User
+	user := campaign.User
+
+	campaignUserFormatter := CampaignUserFormatter{}
+	campaignUserFormatter.Name = user.Name
+	campaignUserFormatter.ImageUrl = user.AvatarFileName
+
+	campaignDetail.User = campaignUserFormatter
+
+	//untuk mengisi images
+	images := []CampaignImagesFormatter{}
+
+	for _, image := range campaign.CampaignImages {
+		campaignImageFormatter := CampaignImagesFormatter{}
+		campaignImageFormatter.ImageUrl = image.FileName
+
+		isPrimary := false
+
+		if image.IsPrimary == 1 {
+			isPrimary = true
+		}
+		campaignImageFormatter.IsPrimary = isPrimary
+
+		images = append(images, campaignImageFormatter)
+	}
+
+	campaignDetail.Images = images
 	return campaignDetail
 }

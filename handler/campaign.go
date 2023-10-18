@@ -105,7 +105,7 @@ func (h *campaignHandler) UpdateCampaign(c *gin.Context) {
 	err := c.ShouldBindUri(&inputId)
 
 	if err != nil {
-		response := helper.ApiResponse("Failed to update campaign", http.StatusBadRequest, "error", nil)
+		response := helper.ApiResponse("Failed to upload campaign", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}

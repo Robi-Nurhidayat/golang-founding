@@ -4,7 +4,6 @@ import (
 	"bwa/golang/helper"
 	"bwa/golang/transaction"
 	"bwa/golang/user"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -23,7 +22,6 @@ func (h *transactionHandler) GetCampaignTransaction(c *gin.Context) {
 
 	err := c.ShouldBindUri(&input)
 
-	fmt.Println("nilai id adalah : ", input)
 	if err != nil {
 		response := helper.ApiResponse("Failed to get campaign transactions", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
@@ -57,6 +55,6 @@ func (h *transactionHandler) GetUserTransaction(c *gin.Context) {
 		return
 	}
 
-	response := helper.ApiResponse("Users's Transaction", http.StatusOK, "success", transactions)
+	response := helper.ApiResponse("Users's Transaction", http.StatusOK, "success", transaction.FormatUserTransactions(transactions))
 	c.JSON(http.StatusOK, response)
 }

@@ -7,6 +7,7 @@ import (
 	"bwa/golang/helper"
 	"bwa/golang/transaction"
 	"bwa/golang/user"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -42,6 +43,20 @@ func main() {
 	transactionService := transaction.NewTransactionService(transactionRepository, campaignRepository)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
+	userId, _ := userService.GetUserById(24)
+	trs := transaction.CreateTransactionInput{
+		CampaignId: 1,
+		User:       userId,
+		Amount:     100,
+	}
+
+	t, err := transactionService.CreateTransaction(trs)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(t)
 	router := gin.Default()
 	router.Static("/images", "./images")
 	api := router.Group("/api/v1")
@@ -61,7 +76,11 @@ func main() {
 
 	api.GET("/campaigns/:id/transactions", authMiddleware(authService, userService), transactionHandler.GetCampaignTransaction)
 	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransaction)
+	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransaction)
+
 	router.Run()
+
+	
 
 }
 func authMiddleware(serviceAuth auth.ServiceAuth, service user.Service) gin.HandlerFunc {

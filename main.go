@@ -5,6 +5,7 @@ import (
 	"bwa/golang/campaign"
 	"bwa/golang/handler"
 	"bwa/golang/helper"
+	"bwa/golang/payment"
 	"bwa/golang/transaction"
 	"bwa/golang/user"
 	"fmt"
@@ -28,6 +29,10 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	//payment service
+	paymentService := payment.NewPaymentService()
+
+	//user
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 	authService := auth.NewJwtService()
@@ -40,7 +45,7 @@ func main() {
 
 	//Transaction
 	transactionRepository := transaction.NewTransactionRepository(db)
-	transactionService := transaction.NewTransactionService(transactionRepository, campaignRepository)
+	transactionService := transaction.NewTransactionService(transactionRepository, campaignRepository, paymentService)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	userId, _ := userService.GetUserById(24)
@@ -60,6 +65,8 @@ func main() {
 	router := gin.Default()
 	router.Static("/images", "./images")
 	api := router.Group("/api/v1")
+
+	//user
 	api.POST("/users", userHandler.RegisterUser)
 	api.POST("/sessions", userHandler.Login)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
@@ -79,8 +86,6 @@ func main() {
 	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransaction)
 
 	router.Run()
-
-	
 
 }
 func authMiddleware(serviceAuth auth.ServiceAuth, service user.Service) gin.HandlerFunc {

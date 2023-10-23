@@ -81,6 +81,6 @@ func (h *transactionHandler) CreateTransaction(c *gin.Context) {
 		return
 	}
 
-	response := helper.ApiResponse("Success to create transaction", http.StatusOK, "success", newTransaction)
+	response := helper.ApiResponse("Success to create transaction", http.StatusOK, "success", transaction.FormatPaymentTransactions(newTransaction))
 	c.JSON(http.StatusOK, response)
 }

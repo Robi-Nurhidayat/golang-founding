@@ -1,17 +1,16 @@
 package payment
 
 import (
-	"bwa/golang/transaction"
 	"bwa/golang/user"
-	"strconv"
-
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/snap"
+	"strconv"
 )
 
-var sn = snap.Client
+var sn = snap.Client{}
+
 type PaymentService interface {
-	GetToken(transaction transaction.Transaction, user user.User) (string, error)
+	GetToken(transaction TransactionPayment, user user.User) (string, error)
 }
 
 type service struct {
@@ -21,13 +20,29 @@ func NewPaymentService() PaymentService {
 	return &service{}
 }
 
-func (s service) GetToken(transaction transaction.Transaction, user user.User) (string, error) {
-	midtrans.ServerKey = "YOUR-SERVER-KEY"
+func (s service) GetToken(transaction TransactionPayment, user user.User) (string, error) {
+	midtrans.ServerKey = ""
 	midtrans.Environment = midtrans.Sandbox
-	
-	sn.New("sdasdjasjdlaks", midtrans.Sandbox)
-	
-	
+
+	sn.New("", midtrans.Sandbox)
+
+	snapReq := &snap.Request{
+		TransactionDetails: midtrans.TransactionDetails{
+			OrderID:  strconv.Itoa(transaction.Id),
+			GrossAmt: int64(transaction.Amount),
+		},
+		//CreditCard: &snap.CreditCardDetails{
+		//	Secure: true,
+		//},
+		CustomerDetail: &midtrans.CustomerDetails{
+			FName: user.Name,
+			Email: user.Email,
+		},
+	}
+
+	snapToken, _ := sn.CreateTransactionUrl(snapReq)
+
+	return snapToken, nil
 }
 
 // func (s *service) GetToken(transaction transaction.Transaction,req *snap.Request) (string,*midtrans.Error) {
@@ -41,25 +56,25 @@ func (s service) GetToken(transaction transaction.Transaction, user user.User) (
 
 // }
 
-func GenerateSnapReq(transaction transaction.Transaction, user user.User) *snap.Request {
-
-	// Initiate Snap Request
-	snapReq := &snap.Request{
-		TransactionDetails: midtrans.TransactionDetails{
-			OrderID:  strconv.Itoa(transaction.Id),
-			GrossAmt: int64(transaction.Amount),
-		},
-		CreditCard: &snap.CreditCardDetails{
-			Secure: true,
-		},
-		CustomerDetail: &midtrans.CustomerDetails{
-			FName: user.Name,
-			Email: user.Email,
-		},
-	}
-
-	return snapReq
-}
+//func GenerateSnapReq(transaction TransactionPayment, user user.User) *snap.Request {
+//
+//	// Initiate Snap Request
+//	snapReq := &snap.Request{
+//		TransactionDetails: midtrans.TransactionDetails{
+//			OrderID:  strconv.Itoa(transaction.Id),
+//			GrossAmt: int64(transaction.Amount),
+//		},
+//		CreditCard: &snap.CreditCardDetails{
+//			Secure: true,
+//		},
+//		CustomerDetail: &midtrans.CustomerDetails{
+//			FName: user.Name,
+//			Email: user.Email,
+//		},
+//	}
+//
+//	return snapReq
+//}
 
 //func setupGlobalMidtransConfig() {
 //	midtrans.ServerKey = "example.SandboxServerKey1"

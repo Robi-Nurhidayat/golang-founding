@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"bwa/golang/campaign"
+	"bwa/golang/payment"
 	"errors"
 )
 
@@ -14,10 +15,11 @@ type TransactionService interface {
 type service struct {
 	repository         TransactionRepository
 	campaignRepository campaign.RepositoryCampaign
+	paymentService     payment.PaymentService
 }
 
-func NewTransactionService(repository TransactionRepository, campaignRepository campaign.RepositoryCampaign) TransactionService {
-	return &service{repository: repository, campaignRepository: campaignRepository}
+func NewTransactionService(repository TransactionRepository, campaignRepository campaign.RepositoryCampaign, paymentService payment.PaymentService) TransactionService {
+	return &service{repository: repository, campaignRepository: campaignRepository, paymentService: paymentService}
 }
 
 func (s *service) GetTransactionByCampaignId(input GetCampaignTransactionInput) ([]Transaction, error) {
@@ -62,5 +64,22 @@ func (s *service) CreateTransaction(input CreateTransactionInput) (Transaction, 
 		return newTransaction, err
 	}
 
+	paymentTransaction := payment.TransactionPayment{
+		Id:     newTransaction.Id,
+		Amount: newTransaction.Amount,
+	}
+
+	paymentURL, err := s.paymentService.GetToken(paymentTransaction, input.User)
+
+	if err != nil {
+		return newTransaction, err
+	}
+
+	newTransaction.PaymentURL = paymentURL
+
+	newTransaction, err = s.repository.Update(newTransaction)
+	if err != nil {
+		return newTransaction, err
+	}
 	return newTransaction, nil
 }

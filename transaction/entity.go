@@ -17,4 +17,5 @@ type Transaction struct {
 	User       user.User
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+	PaymentURL string
 }

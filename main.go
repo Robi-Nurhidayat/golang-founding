@@ -8,7 +8,6 @@ import (
 	"bwa/golang/payment"
 	"bwa/golang/transaction"
 	"bwa/golang/user"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -29,8 +28,10 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	campaignRepository := campaign.NewRepositoryCampaign(db)
+	transactionRepository := transaction.NewTransactionRepository(db)
 	//payment service
-	paymentService := payment.NewPaymentService()
+	paymentService := payment.NewPaymentService(transactionRepository, campaignRepository)
 
 	//user
 	userRepository := user.NewRepository(db)
@@ -39,29 +40,15 @@ func main() {
 	userHandler := handler.NewUserHandler(userService, authService)
 
 	//campaigns
-	campaignRepository := campaign.NewRepositoryCampaign(db)
+
 	campaignService := campaign.NewCampaignService(campaignRepository)
 	campaignHandler := handler.NewCampaignHandler(campaignService)
 
 	//Transaction
-	transactionRepository := transaction.NewTransactionRepository(db)
+
 	transactionService := transaction.NewTransactionService(transactionRepository, campaignRepository, paymentService)
-	transactionHandler := handler.NewTransactionHandler(transactionService)
+	transactionHandler := handler.NewTransactionHandler(transactionService, paymentService)
 
-	userId, _ := userService.GetUserById(24)
-	trs := transaction.CreateTransactionInput{
-		CampaignId: 1,
-		User:       userId,
-		Amount:     100,
-	}
-
-	t, err := transactionService.CreateTransaction(trs)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(t)
 	router := gin.Default()
 	router.Static("/images", "./images")
 	api := router.Group("/api/v1")
@@ -84,6 +71,7 @@ func main() {
 	api.GET("/campaigns/:id/transactions", authMiddleware(authService, userService), transactionHandler.GetCampaignTransaction)
 	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransaction)
 	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransaction)
+	api.POST("/transactions/notification", transactionHandler.GetNotification)
 
 	router.Run()
 

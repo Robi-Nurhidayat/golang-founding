@@ -69,7 +69,7 @@ func (s *service) CreateTransaction(input CreateTransactionInput) (Transaction, 
 		Amount: newTransaction.Amount,
 	}
 
-	paymentURL, err := s.paymentService.GetToken(paymentTransaction, input.User)
+	paymentURL, err := s.paymentService.GetURLPayment(paymentTransaction, input.User)
 
 	if err != nil {
 		return newTransaction, err

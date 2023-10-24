@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bwa/golang/helper"
+	"bwa/golang/payment"
 	"bwa/golang/transaction"
 	"bwa/golang/user"
 	"github.com/gin-gonic/gin"
@@ -9,12 +10,14 @@ import (
 )
 
 type transactionHandler struct {
-	service transaction.TransactionService
+	service        transaction.TransactionService
+	paymentService payment.PaymentService
 }
 
-func NewTransactionHandler(service transaction.TransactionService) *transactionHandler {
+func NewTransactionHandler(service transaction.TransactionService, paymentService payment.PaymentService) *transactionHandler {
 	return &transactionHandler{
-		service: service,
+		service:        service,
+		paymentService: paymentService,
 	}
 }
 func (h *transactionHandler) GetCampaignTransaction(c *gin.Context) {
@@ -83,4 +86,22 @@ func (h *transactionHandler) CreateTransaction(c *gin.Context) {
 
 	response := helper.ApiResponse("Success to create transaction", http.StatusOK, "success", transaction.FormatPaymentTransactions(newTransaction))
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *transactionHandler) GetNotification(c *gin.Context) {
+	var input transaction.TransactionNotificationAmountInput
+
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		response := helper.ApiResponse("Failed to process notification", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	err = h.paymentService.ProcessPayment(input)
+	if err != nil {
+		response := helper.ApiResponse("Failed to process notification", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	c.JSON(http.StatusOK, input)
 }

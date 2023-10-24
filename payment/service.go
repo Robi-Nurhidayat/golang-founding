@@ -1,8 +1,6 @@
 package payment
 
 import (
-	"bwa/golang/campaign"
-	"bwa/golang/transaction"
 	"bwa/golang/user"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/snap"
@@ -13,16 +11,13 @@ var sn = snap.Client{}
 
 type PaymentService interface {
 	GetURLPayment(transaction TransactionPayment, user user.User) (string, error)
-	ProcessPayment(input transaction.TransactionNotificationAmountInput) error
 }
 
 type service struct {
-	transactionRepository transaction.TransactionRepository
-	campaignRepository    campaign.RepositoryCampaign
 }
 
-func NewPaymentService(transactionRepository transaction.TransactionRepository, campaignRepository campaign.RepositoryCampaign) PaymentService {
-	return &service{transactionRepository: transactionRepository, campaignRepository: campaignRepository}
+func NewPaymentService() PaymentService {
+	return &service{}
 }
 
 func (s *service) GetURLPayment(transaction TransactionPayment, user user.User) (string, error) {
@@ -48,46 +43,6 @@ func (s *service) GetURLPayment(transaction TransactionPayment, user user.User) 
 	snapToken, _ := sn.CreateTransactionUrl(snapReq)
 
 	return snapToken, nil
-}
-
-func (s *service) ProcessPayment(input transaction.TransactionNotificationAmountInput) error {
-	transactionId, _ := strconv.Atoi(input.OrderId)
-
-	transactionById, err := s.transactionRepository.GetById(transactionId)
-
-	if err != nil {
-		return err
-	}
-
-	if input.PaymentType == "credit_card" && input.TransactionStatus == "capture" && input.FraudStatus == "accept" {
-		transactionById.Status = "paid"
-	} else if input.TransactionStatus == "settlement" {
-		transactionById.Status = "paid"
-	} else if input.TransactionStatus == "deny" || input.TransactionStatus == "expire" || input.TransactionStatus == "cancel" {
-		transactionById.Status = "cancelled"
-	}
-
-	updatedTransaction, err := s.transactionRepository.Update(transactionById)
-	if err != nil {
-		return err
-	}
-
-	campaignById, err := s.campaignRepository.FindById(updatedTransaction.CampaignID)
-	if err != nil {
-		return err
-	}
-
-	if updatedTransaction.Status == "paid" {
-		campaignById.BackerCount = campaignById.BackerCount + 1
-		campaignById.CurrentAmount = campaignById.CurrentAmount + updatedTransaction.Amount
-
-		_, err := s.campaignRepository.Update(campaignById)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // func (s *service) GetToken(transaction transaction.Transaction,req *snap.Request) (string,*midtrans.Error) {

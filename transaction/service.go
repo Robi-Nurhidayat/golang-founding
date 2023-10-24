@@ -4,12 +4,14 @@ import (
 	"bwa/golang/campaign"
 	"bwa/golang/payment"
 	"errors"
+	"strconv"
 )
 
 type TransactionService interface {
 	GetTransactionByCampaignId(input GetCampaignTransactionInput) ([]Transaction, error)
 	GetTransactionByUserId(userId int) ([]Transaction, error)
 	CreateTransaction(input CreateTransactionInput) (Transaction, error)
+	ProcessPayment(input TransactionNotificationAmountInput) error
 }
 
 type service struct {
@@ -82,4 +84,44 @@ func (s *service) CreateTransaction(input CreateTransactionInput) (Transaction, 
 		return newTransaction, err
 	}
 	return newTransaction, nil
+}
+
+func (s *service) ProcessPayment(input TransactionNotificationAmountInput) error {
+	transactionId, _ := strconv.Atoi(input.OrderId)
+
+	transactionById, err := s.repository.GetById(transactionId)
+
+	if err != nil {
+		return err
+	}
+
+	if input.PaymentType == "credit_card" && input.TransactionStatus == "capture" && input.FraudStatus == "accept" {
+		transactionById.Status = "paid"
+	} else if input.TransactionStatus == "settlement" {
+		transactionById.Status = "paid"
+	} else if input.TransactionStatus == "deny" || input.TransactionStatus == "expire" || input.TransactionStatus == "cancel" {
+		transactionById.Status = "cancelled"
+	}
+
+	updatedTransaction, err := s.repository.Update(transactionById)
+	if err != nil {
+		return err
+	}
+
+	campaignById, err := s.campaignRepository.FindById(updatedTransaction.CampaignID)
+	if err != nil {
+		return err
+	}
+
+	if updatedTransaction.Status == "paid" {
+		campaignById.BackerCount = campaignById.BackerCount + 1
+		campaignById.CurrentAmount = campaignById.CurrentAmount + updatedTransaction.Amount
+
+		_, err := s.campaignRepository.Update(campaignById)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

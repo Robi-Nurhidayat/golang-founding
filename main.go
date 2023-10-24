@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/gin-gonic/gin"
@@ -31,7 +32,7 @@ func main() {
 	campaignRepository := campaign.NewRepositoryCampaign(db)
 	transactionRepository := transaction.NewTransactionRepository(db)
 	//payment service
-	paymentService := payment.NewPaymentService(transactionRepository, campaignRepository)
+	paymentService := payment.NewPaymentService()
 
 	//user
 	userRepository := user.NewRepository(db)
@@ -47,9 +48,10 @@ func main() {
 	//Transaction
 
 	transactionService := transaction.NewTransactionService(transactionRepository, campaignRepository, paymentService)
-	transactionHandler := handler.NewTransactionHandler(transactionService, paymentService)
+	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	router := gin.Default()
+	router.Use(cors.Default())
 	router.Static("/images", "./images")
 	api := router.Group("/api/v1")
 
